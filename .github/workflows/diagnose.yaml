@@ -1,0 +1,35 @@
+name: Diagnose
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Libraries installieren
+        run: pip install -r requirements.txt
+
+      - name: config.yaml schreiben
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+        run: printf '%s' "$CONFIG_YAML" > config.yaml
+
+      - name: Diagnose
+        env:
+          IMAP_HOST: imap.gmail.com
+          IMAP_PORT: "993"
+          IMAP_FOLDER: INBOX
+          IMAP_USER: ${{ secrets.IMAP_USER }}
+          IMAP_PASSWORD: ${{ secrets.IMAP_PASSWORD }}
+        run: python diagnose.py
