@@ -1,0 +1,57 @@
+name: Scraper
+
+on:
+  schedule:
+    - cron: "4,19,34,49 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: schnaeppchen-radar
+  cancel-in-progress: false
+
+jobs:
+  scraper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Libraries installieren
+        run: pip install -r requirements.txt
+
+      - name: config.yaml schreiben
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+        run: printf '%s' "$CONFIG_YAML" > config.yaml
+
+      - name: Datenbank wiederherstellen
+        uses: actions/cache/restore@v4
+        with:
+          path: data/radar.sqlite
+          key: radar-db-${{ github.run_id }}
+          restore-keys: radar-db-
+
+      - name: Scraper ausfuehren
+        env:
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: "587"
+          SMTP_FROM_NAME: Schnaeppchen-Radar
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+          REPORT_EMAIL: ${{ secrets.REPORT_EMAIL }}
+        run: python scraper.py
+
+      - name: Datenbank speichern
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/radar.sqlite
+          key: radar-db-${{ github.run_id }}
