@@ -2,11 +2,9 @@ name: Schnaeppchen-Radar
 
 on:
   schedule:
-    # alle 15 Minuten, bewusst nicht zur vollen Stunde
     - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
 
-# Nie zwei Läufe gleichzeitig, sonst überschreiben sie sich die Datenbank
 concurrency:
   group: schnaeppchen-radar
   cancel-in-progress: false
@@ -15,7 +13,6 @@ jobs:
   radar:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
       - name: Code holen
         uses: actions/checkout@v4
@@ -29,32 +26,37 @@ jobs:
       - name: Libraries installieren
         run: pip install -r requirements.txt
 
-      - name: config.yaml aus dem Secret schreiben
+      - name: config.yaml schreiben
         env:
           CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
         run: printf '%s' "$CONFIG_YAML" > config.yaml
 
-      - name: Datenbank vom letzten Lauf wiederherstellen
+      - name: Datenbank wiederherstellen
         uses: actions/cache/restore@v4
         with:
           path: data/radar.sqlite
-                                                                                           -
+          key: radar-db-${{ github.run_id }}
+          restore-keys: radar-db-
 
-
-                                                     I                                                                                                            I                   MTP          7"
-                          Sc                           IMAP_USER: ${{ se                                                secrets.IMAP_PASSWORD }}
+      - name: Radar ausfuehren
+        env:
+          IMAP_HOST: imap.gmail.com
+          IMAP_PORT: "993"
+          IMAP_FOLDER: INBOX
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: "587"
+          SMTP_FROM_NAME: Schnaeppchen-Radar
+          IMAP_USER: ${{ secrets.IMAP_USER }}
+          IMAP_PASSWORD: ${{ secrets.IMAP_PASSWORD }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
-                              ecrets                              ecreROM_            ec                     }}
-                _EMAIL: ${{ secrets.REPORT_EMAIL }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+          REPORT_EMAIL: ${{ secrets.REPORT_EMAIL }}
         run: python main.py run --sofort-senden
 
-      - name: Datenbank für den nächsten Lauf speichern
+      - name: Datenbank speichern
         if: always()
         uses: actions/cache/save@v4
         with:
           path: data/radar.sqlite
           key: radar-db-${{ github.run_id }}
-
-  # Verhindert, dass GitHub den  # Verhindert, dass GitHub den  # tät  # Vhaltet
-  keepalive:
-    runs-on: ubuntu-lat    runs-on: ubuntu-lat    runs-on: ubuntu-lat    runs-on: ubuntu-lat    runs-on: ubuntu-    - uses: gautamkrishnar/keepalive-workflow@v2
