@@ -1,0 +1,60 @@
+name: Schnaeppchen-Radar
+
+on:
+  schedule:
+    # alle 15 Minuten, bewusst nicht zur vollen Stunde
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+# Nie zwei Läufe gleichzeitig, sonst überschreiben sie sich die Datenbank
+concurrency:
+  group: schnaeppchen-radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Libraries installieren
+        run: pip install -r requirements.txt
+
+      - name: config.yaml aus dem Secret schreiben
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+        run: printf '%s' "$CONFIG_YAML" > config.yaml
+
+      - name: Datenbank vom letzten Lauf wiederherstellen
+        uses: actions/cache/restore@v4
+        with:
+          path: data/radar.sqlite
+                                                                                           -
+
+
+                                                     I                                                                                                            I                   MTP          7"
+                          Sc                           IMAP_USER: ${{ se                                                secrets.IMAP_PASSWORD }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+                              ecrets                              ecreROM_            ec                     }}
+                _EMAIL: ${{ secrets.REPORT_EMAIL }}
+        run: python main.py run --sofort-senden
+
+      - name: Datenbank für den nächsten Lauf speichern
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/radar.sqlite
+          key: radar-db-${{ github.run_id }}
+
+  # Verhindert, dass GitHub den  # Verhindert, dass GitHub den  # tät  # Vhaltet
+  keepalive:
+    runs-on: ubuntu-lat    runs-on: ubuntu-lat    runs-on: ubuntu-lat    runs-on: ubuntu-lat    runs-on: ubuntu-    - uses: gautamkrishnar/keepalive-workflow@v2
