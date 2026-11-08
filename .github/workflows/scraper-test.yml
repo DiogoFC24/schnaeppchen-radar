@@ -1,0 +1,38 @@
+name: Scraper-Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Libraries installieren
+        run: pip install -r requirements.txt
+
+      - name: config.yaml schreiben
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+        run: printf '%s' "$CONFIG_YAML" > config.yaml
+
+      - name: Trockenlauf mit Debug-Ausgabe
+        run: python scraper.py --trocken --debug --html-ordner debug_html
+
+      - name: Geladene Seiten sichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-html
+          path: debug_html
+          if-no-files-found: ignore
+          retention-days: 3
